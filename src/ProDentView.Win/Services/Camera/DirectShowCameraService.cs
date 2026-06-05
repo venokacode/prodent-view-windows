@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using ProDentView.Win.Services.Camera.DirectShow;
@@ -125,6 +126,10 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
             }
             NativeMethods.ThrowIfFailed(hr, "Enumerate video input devices");
             NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create bind context");
+            if (bindCtx is null)
+            {
+                throw new InvalidOperationException("Failed to create COM bind context.");
+            }
 
             var monikers = new IMoniker[1];
             while (enumMoniker.Next(1, monikers, IntPtr.Zero) == DirectShowConstants.SOk)
@@ -148,13 +153,13 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
             .ToArray();
     }
 
-    private static string GetDisplayName(IMoniker moniker, IBindCtx? bindCtx)
+    private static string GetDisplayName(IMoniker moniker, IBindCtx bindCtx)
     {
         moniker.GetDisplayName(bindCtx, null, out var displayName);
         return displayName;
     }
 
-    private static string? GetFriendlyName(IMoniker moniker, IBindCtx? bindCtx)
+    private static string? GetFriendlyName(IMoniker moniker, IBindCtx bindCtx)
     {
         object? bagObject = null;
         try
@@ -196,6 +201,10 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
                 throw new InvalidOperationException("No video input devices are available.");
             }
             NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create bind context");
+            if (bindCtx is null)
+            {
+                throw new InvalidOperationException("Failed to create COM bind context.");
+            }
 
             var monikers = new IMoniker[1];
             while (enumMoniker.Next(1, monikers, IntPtr.Zero) == DirectShowConstants.SOk)
@@ -225,15 +234,23 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
         captureGraphBuilder = (ICaptureGraphBuilder2)NativeMethods.CreateComObject(DirectShowGuids.CaptureGraphBuilder2);
         NativeMethods.ThrowIfFailed(captureGraphBuilder.SetFiltergraph(graphBuilder), "Attach capture graph builder");
 
+        IBindCtx? bindCtx = null;
         var moniker = FindDeviceMoniker(device.Id);
         try
         {
+            NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create bind context");
+            if (bindCtx is null)
+            {
+                throw new InvalidOperationException("Failed to create COM bind context.");
+            }
+
             var baseFilterId = DirectShowGuids.IidIBaseFilter;
-            moniker.BindToObject(null, null, ref baseFilterId, out var sourceObject);
+            moniker.BindToObject(bindCtx, null, ref baseFilterId, out var sourceObject);
             sourceFilter = (IBaseFilter)sourceObject;
         }
         finally
         {
+            NativeMethods.ReleaseComObject(bindCtx);
             NativeMethods.ReleaseComObject(moniker);
         }
 

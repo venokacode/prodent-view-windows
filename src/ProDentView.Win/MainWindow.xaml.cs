@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using ProDentView.Win.Models;
 using ProDentView.Win.Services;
 using ProDentView.Win.Services.Camera;
+using MessageBox = System.Windows.MessageBox;
 
 namespace ProDentView.Win;
 
