@@ -6,6 +6,7 @@ using ProDentView.Win.Models;
 using ProDentView.Win.Services;
 using ProDentView.Win.Services.Camera;
 using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ProDentView.Win;
 
