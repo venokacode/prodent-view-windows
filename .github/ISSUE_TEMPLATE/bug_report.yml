@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible Windows problem.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve ProDENT View for Windows. Please keep patient-identifying information out of public issues.
+  - type: input
+    id: version
+    attributes:
+      label: App version or commit
+      description: Version, commit SHA, or branch where the issue happened.
+      placeholder: "main @ abc1234"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 23H2"
+    validations:
+      required: true
+  - type: textarea
+    id: camera
+    attributes:
+      label: Camera details
+      description: Intraoral camera model, UVC behavior, VID/PID if available.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened? What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ProDENT View
+        2. Select camera
+        3. Click Capture
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Attach non-sensitive logs, screenshots, or sample images only when appropriate.
+

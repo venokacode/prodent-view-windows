@@ -1,0 +1,35 @@
+# Build output
+bin/
+obj/
+artifacts/
+publish/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and local data
+*.log
+*.dmp
+*.tmp
+
+# Secrets and signing material
+*.pfx
+*.p12
+*.snk
+*.cer
+*.key
+*.pem
+*.mobileprovision
+
+# Packages
+*.nupkg
+
