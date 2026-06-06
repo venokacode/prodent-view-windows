@@ -83,3 +83,9 @@ Source code is licensed under Apache-2.0. See [LICENSE](LICENSE).
 
 The ProDENT name, logos, product marks, and related brand assets are
 trademarks and are not licensed under Apache-2.0. See [NOTICE](NOTICE).
+
+## Release Readiness
+
+- [Open source release readiness](docs/open-source-release-readiness.md)
+- [EXE release readiness](docs/exe-release-readiness.md)
+- [Microsoft Store readiness](docs/microsoft-store-readiness.md)
