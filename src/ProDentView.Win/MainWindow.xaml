@@ -142,13 +142,16 @@
           <WrapPanel>
             <Button Width="78" Content="Import" Click="ImportButton_Click" />
             <Button Width="78" Margin="8,0,0,0" Content="Export" Click="ExportButton_Click" />
-            <Button Width="86" Margin="8,0,0,0" Content="Delete" Click="DeleteButton_Click" />
+            <Button Width="78" Margin="8,0,0,0" Content="Select All" Click="SelectAllButton_Click" />
+            <Button Width="86" Margin="8,8,0,0" Content="Delete" Click="DeleteButton_Click" />
+            <Button Width="106" Margin="8,8,0,0" Content="Diagnostics" Click="DiagnosticsButton_Click" />
           </WrapPanel>
         </StackPanel>
 
         <ListBox x:Name="ImageList"
                  Margin="0,102,0,0"
                  DisplayMemberPath="FileName"
+                 SelectionMode="Extended"
                  MouseDoubleClick="ImageList_MouseDoubleClick" />
       </DockPanel>
     </Border>

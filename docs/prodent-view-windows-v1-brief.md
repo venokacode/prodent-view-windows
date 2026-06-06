@@ -18,9 +18,7 @@ It is not ProDENT Capture, PC, or MC. It must not own the large dental-software 
 
 ## Windows Camera Direction
 
-The Windows product should treat ProDENT View as its own foreground UVC viewer
-and photo capture app. It should not detect or coordinate with ProDENT Capture,
-PC, or MC.
+Windows does not need the Mac PC/MC coexistence workaround. The Windows product should treat ProDENT View as its own foreground UVC viewer and photo capture app.
 
 Preferred capture order:
 

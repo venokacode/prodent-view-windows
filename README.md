@@ -18,7 +18,8 @@ coexistence behavior.
 
 This Windows implementation is an early source release. The WPF app shell,
 local patient/image storage, DirectShow camera enumeration, live preview, UVC
-still-pin capture attempt, and preview-frame fallback are implemented.
+still-pin capture attempt, preview-frame fallback, multi-select image
+management, export, and diagnostics export are implemented.
 
 Hardware validation should be completed on a Windows 10/11 machine with real
 UVC intraoral cameras before using it in production.
@@ -40,6 +41,18 @@ Run from source:
 ```powershell
 dotnet run --project .\src\ProDentView.Win\ProDentView.Win.csproj
 ```
+
+Publish a self-contained Windows x64 EXE:
+
+```bat
+scripts\publish-exe.cmd
+```
+
+Default output:
+
+- `artifacts\windows-exe\win-x64\ProDENT View.exe`
+- `artifacts\windows-exe\ProDENT-View-Windows-win-x64.zip`
+- `artifacts\windows-exe\ProDENT-View-Windows-win-x64.zip.sha256`
 
 ## Camera Direction
 

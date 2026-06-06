@@ -126,17 +126,14 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
             }
             NativeMethods.ThrowIfFailed(hr, "Enumerate video input devices");
             NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create bind context");
-            if (bindCtx is null)
-            {
-                throw new InvalidOperationException("Failed to create COM bind context.");
-            }
+            var activeBindCtx = bindCtx ?? throw new InvalidOperationException("DirectShow bind context was not created.");
 
             var monikers = new IMoniker[1];
             while (enumMoniker.Next(1, monikers, IntPtr.Zero) == DirectShowConstants.SOk)
             {
                 var moniker = monikers[0];
-                var displayName = GetDisplayName(moniker, bindCtx);
-                var friendlyName = GetFriendlyName(moniker, bindCtx) ?? displayName;
+                var displayName = GetDisplayName(moniker, activeBindCtx);
+                var friendlyName = GetFriendlyName(moniker, activeBindCtx) ?? displayName;
                 devices.Add(new CameraDeviceInfo(displayName, friendlyName, displayName));
                 NativeMethods.ReleaseComObject(moniker);
             }
@@ -201,16 +198,13 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
                 throw new InvalidOperationException("No video input devices are available.");
             }
             NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create bind context");
-            if (bindCtx is null)
-            {
-                throw new InvalidOperationException("Failed to create COM bind context.");
-            }
+            var activeBindCtx = bindCtx ?? throw new InvalidOperationException("DirectShow bind context was not created.");
 
             var monikers = new IMoniker[1];
             while (enumMoniker.Next(1, monikers, IntPtr.Zero) == DirectShowConstants.SOk)
             {
                 var moniker = monikers[0];
-                var displayName = GetDisplayName(moniker, bindCtx);
+                var displayName = GetDisplayName(moniker, activeBindCtx);
                 if (string.Equals(displayName, deviceId, StringComparison.Ordinal))
                 {
                     return moniker;
@@ -234,17 +228,12 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
         captureGraphBuilder = (ICaptureGraphBuilder2)NativeMethods.CreateComObject(DirectShowGuids.CaptureGraphBuilder2);
         NativeMethods.ThrowIfFailed(captureGraphBuilder.SetFiltergraph(graphBuilder), "Attach capture graph builder");
 
-        IBindCtx? bindCtx = null;
         var moniker = FindDeviceMoniker(device.Id);
+        IBindCtx? bindCtx = null;
         try
         {
-            NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create bind context");
-            if (bindCtx is null)
-            {
-                throw new InvalidOperationException("Failed to create COM bind context.");
-            }
-
             var baseFilterId = DirectShowGuids.IidIBaseFilter;
+            NativeMethods.ThrowIfFailed(NativeMethods.CreateBindCtx(0, out bindCtx), "Create source bind context");
             moniker.BindToObject(bindCtx, null, ref baseFilterId, out var sourceObject);
             sourceFilter = (IBaseFilter)sourceObject;
         }
@@ -418,7 +407,12 @@ public sealed class DirectShowCameraService : ICameraService, IDisposable
                 return;
             }
 
-            captureGraphBuilder.FindPin(sourceFilter, PinDirection.Output, ref still, ref video, false, 0, out stillPin);
+            hr = captureGraphBuilder.FindPin(sourceFilter, PinDirection.Output, ref still, ref video, false, 0, out stillPin);
+            if (hr < 0 || stillPin is null)
+            {
+                sampleGrabber = null;
+                LastStatus = "Still pin trigger unavailable";
+            }
         }
         catch
         {

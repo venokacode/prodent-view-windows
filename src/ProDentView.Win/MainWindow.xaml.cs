@@ -1,12 +1,16 @@
 using System.Collections.ObjectModel;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using ProDentView.Win.Models;
 using ProDentView.Win.Services;
 using ProDentView.Win.Services.Camera;
-using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
+using WpfMessageBox = System.Windows.MessageBox;
 
 namespace ProDentView.Win;
 
@@ -53,7 +57,7 @@ public partial class MainWindow : Window
         var name = PatientNameBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            MessageBox.Show(this, "Patient name is required.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show(this, "Patient name is required.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
             PatientNameBox.Focus();
             return;
         }
@@ -75,14 +79,14 @@ public partial class MainWindow : Window
     {
         if (selectedPatient is null)
         {
-            MessageBox.Show(this, "Select a patient first.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show(this, "Select a patient first.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
         var name = PatientNameBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            MessageBox.Show(this, "Patient name is required.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show(this, "Patient name is required.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
             PatientNameBox.Focus();
             return;
         }
@@ -143,7 +147,7 @@ public partial class MainWindow : Window
     {
         if (selectedPatient is null)
         {
-            MessageBox.Show(this, "Select a patient first.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show(this, "Select a patient first.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -156,7 +160,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Capture failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            WpfMessageBox.Show(this, ex.Message, "Capture failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -164,7 +168,7 @@ public partial class MainWindow : Window
     {
         if (selectedPatient is null)
         {
-            MessageBox.Show(this, "Select a patient first.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show(this, "Select a patient first.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -196,7 +200,7 @@ public partial class MainWindow : Window
     {
         if (images.Count == 0)
         {
-            MessageBox.Show(this, "No images to export.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show(this, "No images to export.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -221,25 +225,78 @@ public partial class MainWindow : Window
             System.IO.File.Copy(image.FilePath, targetPath, overwrite: false);
         }
 
-        MessageBox.Show(this, "Export complete.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
+        WpfMessageBox.Show(this, "Export complete.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
     {
-        if (ImageList.SelectedItem is not CapturedImageRecord record)
+        var selectedImages = ImageList.SelectedItems
+            .Cast<CapturedImageRecord>()
+            .ToArray();
+        if (selectedImages.Length == 0)
         {
             return;
         }
 
-        images.Remove(record);
-        if (System.IO.File.Exists(record.FilePath))
+        var message = selectedImages.Length == 1
+            ? $"Move {selectedImages[0].FileName} to the Recycle Bin?"
+            : $"Move {selectedImages.Length} images to the Recycle Bin?";
+        if (WpfMessageBox.Show(this, message, "Delete images", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
         {
-            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
-                record.FilePath,
-                Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin
-            );
+            return;
         }
+
+        var failed = 0;
+        foreach (var record in selectedImages)
+        {
+            try
+            {
+                if (System.IO.File.Exists(record.FilePath))
+                {
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
+                        record.FilePath,
+                        Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                        Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin
+                    );
+                }
+
+                images.Remove(record);
+            }
+            catch
+            {
+                failed += 1;
+            }
+        }
+
+        if (failed > 0)
+        {
+            WpfMessageBox.Show(this, $"{failed} image(s) could not be deleted.", "Delete images", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void SelectAllButton_Click(object sender, RoutedEventArgs e)
+    {
+        ImageList.SelectedItems.Clear();
+        foreach (var image in images)
+        {
+            ImageList.SelectedItems.Add(image);
+        }
+    }
+
+    private void DiagnosticsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            FileName = $"prodent-view-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.txt",
+            Filter = "Text file|*.txt"
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        System.IO.File.WriteAllText(dialog.FileName, BuildDiagnosticsReport(), Encoding.UTF8);
+        WpfMessageBox.Show(this, "Diagnostics exported.", "ProDENT View", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void ImageList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -330,7 +387,7 @@ public partial class MainWindow : Window
         {
             isPopulatingCameras = false;
             CameraStatusText.Text = "Camera enumeration failed";
-            MessageBox.Show(this, ex.Message, "Camera enumeration failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            WpfMessageBox.Show(this, ex.Message, "Camera enumeration failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -347,7 +404,7 @@ public partial class MainWindow : Window
         {
             PreviewStatusText.Visibility = Visibility.Visible;
             CameraStatusText.Text = "Preview failed";
-            MessageBox.Show(this, ex.Message, "Preview failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            WpfMessageBox.Show(this, ex.Message, "Preview failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -364,5 +421,43 @@ public partial class MainWindow : Window
         }
 
         return target;
+    }
+
+    private string BuildDiagnosticsReport()
+    {
+        var assembly = Assembly.GetEntryAssembly();
+        var version = assembly?.GetName().Version?.ToString() ?? "Unknown";
+        var selectedCamera = CameraComboBox.SelectedItem as CameraDeviceInfo;
+        var report = new StringBuilder();
+
+        report.AppendLine("ProDENT View Windows Diagnostics");
+        report.AppendLine($"Generated: {DateTimeOffset.Now:O}");
+        report.AppendLine($"App version: {version}");
+        report.AppendLine($"OS: {RuntimeInformation.OSDescription}");
+        report.AppendLine($"OS architecture: {RuntimeInformation.OSArchitecture}");
+        report.AppendLine($".NET: {RuntimeInformation.FrameworkDescription}");
+        report.AppendLine($"Machine: {Environment.MachineName}");
+        report.AppendLine();
+
+        report.AppendLine("Camera");
+        report.AppendLine($"Selected camera: {selectedCamera?.Name ?? "None"}");
+        report.AppendLine($"Selected camera path: {selectedCamera?.DevicePath ?? "None"}");
+        report.AppendLine($"Detected cameras: {cameraDevices.Count}");
+        foreach (var device in cameraDevices)
+        {
+            report.AppendLine($"- {device.Name}");
+            report.AppendLine($"  {device.DevicePath}");
+        }
+        report.AppendLine($"Last capture route: {cameraService.LastCaptureRoute}");
+        report.AppendLine($"Last camera status: {cameraService.LastStatus}");
+        report.AppendLine();
+
+        report.AppendLine("Storage");
+        report.AppendLine($"Image root: {imageStore.RootPath}");
+        report.AppendLine($"Patient count: {patients.Count}");
+        report.AppendLine($"Selected patient: {selectedPatient?.Name ?? "None"}");
+        report.AppendLine($"Loaded image count: {images.Count}");
+
+        return report.ToString();
     }
 }
