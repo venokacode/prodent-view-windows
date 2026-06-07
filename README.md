@@ -87,5 +87,6 @@ trademarks and are not licensed under Apache-2.0. See [NOTICE](NOTICE).
 ## Release Readiness
 
 - [Open source release readiness](docs/open-source-release-readiness.md)
+- [QA test handoff](docs/test-handoff.md)
 - [EXE release readiness](docs/exe-release-readiness.md)
 - [Microsoft Store readiness](docs/microsoft-store-readiness.md)

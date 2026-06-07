@@ -21,6 +21,50 @@ It is not ProDENT Capture. It must not own dental software shortcut matrices, gl
 - Keep the interface minimal and AMCap-inspired.
 - Ship toward Microsoft Store readiness.
 
+## Current Implementation Status
+
+Status date: 2026-06-06
+
+Implemented:
+
+- WPF/.NET 8 desktop app shell.
+- Three-column AMCap-inspired workspace:
+  - left patient form and list
+  - center large live preview
+  - right selected-patient image list
+- Patient name required.
+- Optional patient fields currently exposed:
+  - chart ID
+  - phone
+  - email
+  - notes
+- Optional patient fields currently modeled but not yet exposed in the UI:
+  - birth date
+  - sex
+- Local JSON patient persistence.
+- Local patient/date image storage.
+- Import images with same-name collision protection.
+- Multi-select, select-all, and recycle-bin delete.
+- Double-click image preview window.
+- Folder export for selected patient image set.
+- Diagnostics text export.
+- DirectShow UVC device enumeration.
+- DirectShow live preview hosted through Windows Forms interop.
+- DirectShow still pin capture attempt through `PIN_CATEGORY_STILL`.
+- `IAMVideoControl::SetMode(..., VideoControlFlag_Trigger)` trigger path.
+- Preview-window JPEG fallback.
+- Windows x64 self-contained EXE publish script.
+- Public Windows-only Apache-2.0 repository.
+
+Not yet verified on Windows hardware:
+
+- UVC camera enumeration on ProDENT intraoral camera hardware.
+- 1280 x 720 preview selection on real hardware.
+- Still pin capture success.
+- Preview-frame fallback image quality.
+- Disconnect/reconnect behavior.
+- Microsoft Store MSIX packaging.
+
 ## V1 Non-Goals
 
 - ProDENT Capture bridge behavior.
@@ -63,6 +107,59 @@ Fallback path:
 - Same-name imports must not overwrite existing images.
 - Delete should use recycle bin where possible.
 - Export supports selected images and full patient/date groups.
+
+## Test Acceptance Criteria
+
+### Launch And Camera
+
+- App launches on Windows 10/11 without administrator permission.
+- App automatically enumerates attached UVC video devices on launch.
+- If no camera is attached, app does not crash and shows a clear no-camera state.
+- User can refresh camera list.
+- Selecting a camera starts live preview.
+- Preview resizes with the application window and remains visible.
+
+### Capture
+
+- Capture button requires a selected patient.
+- When still pin is supported, app saves a JPEG through the still pin path.
+- When still pin is unavailable or trigger fails, app saves a JPEG through preview-frame fallback.
+- Diagnostics identifies the active capture route.
+- Captured files are saved under the selected patient/date folder.
+
+### Patient And Image Flows
+
+- Patient name-only record can be created.
+- Patient edits persist after app restart.
+- Import supports multiple image files.
+- Importing duplicate filenames does not overwrite existing files.
+- Image list updates after capture/import/delete.
+- Multi-select and select-all delete use Recycle Bin.
+- Double-click opens a larger preview window.
+- Export copies images without overwriting same-name files in the export folder.
+
+### Diagnostics
+
+- Diagnostics export creates a text file.
+- Diagnostics include:
+  - generated timestamp
+  - app version
+  - OS description and architecture
+  - .NET runtime
+  - machine name
+  - selected camera name/path
+  - detected camera count
+  - last capture route
+  - last camera status
+  - image storage root
+  - patient/image counts
+
+### Stability
+
+- Closing the app stops and disposes the camera service.
+- Camera enumeration failure shows an error without crashing.
+- Preview startup failure shows an error without crashing.
+- Capture failure shows an error without crashing.
 
 ## UI Direction
 
